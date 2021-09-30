@@ -7,6 +7,7 @@ Step 2: Create an applicate folder and init the project using the following comm
 Step 3: Install required packages using NPM like Express,body-parser,mysql,ejs<br/>
 Step 4: Create index.js file<br/>
 Step 5: Create a Database table and then create database Connection<br/>
+Step 6: Modify database credentials(Like user,password,database etc.) that are used to create database connection in index.js
 
 Here we are using mysql database table admins. <br/>
 You can create above table using below mysql Query:<br/>
