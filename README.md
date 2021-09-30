@@ -16,7 +16,8 @@ CREATE TABLE `admins` (
   `id` int(11) NOT NULL,
   `name` varchar(150) NOT NULL,
   `email` varchar(150) NOT NULL,
-  `mobile` varchar(25) NOT NULL
+  `mobile` varchar(25) NOT NULL,
+  `image` TEXT NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
 

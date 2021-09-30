@@ -19,6 +19,7 @@
         <th>Name</th>
         <th>Email</th>
         <th>Phone No.</th>
+        <th>Image</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -28,7 +29,11 @@
                 <td><%= user.name %></td>
                 <td><%= user.email %></td>
                 <td><%= user.mobile %></td>
+                <td><% if(user.image != '' && user.image != null) { %>
+                  <img src="/uploadimg/<%= user.image %>" height="40" width="50" />
+                <% } %></td>
                 <td>
+                  <td>
                     <a href="edit/<%= user.id %>" class="btn btn-sm btn-primary">Edit</a>
                     <a href="delete/<%= user.id %>" class="btn btn-sm btn-danger">Delete</a>
                 </td>

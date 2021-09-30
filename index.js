@@ -4,6 +4,7 @@ const app = express();
 const mysql = require("mysql");
 const ejs = require("ejs");
 const bodyParser = require("body-parser");
+const fileupload = require('express-fileupload');
 
 const PORT = process.env.port || 3000;
 
@@ -22,11 +23,17 @@ connection.connect((error)=>{
     }
 });
 
+
+app.use('/uploadimg', express.static('./public/file_upload'));
+
 app.set('views',path.join(__dirname,'views'));
 app.set('view engine','ejs');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
+
+app.use(fileupload());
+
 
 app.get('/',(req,res)=>{
     let sql = "select * from admins";
@@ -49,7 +56,18 @@ app.get('/add',(req,res)=>{
 })
 
 app.post('/save',(req,res)=>{
-    let data = {name:req.body.name,email:req.body.email,mobile:req.body.mobile};
+    let image_name = '';
+    if(req.files !== undefined && Object.keys(req.files).length > 0) {
+        let file_upload = req.files.sampleFile;
+        image_name = req.files.sampleFile.name;
+        let upload_path = __dirname + '/public/file_upload/'+ image_name;
+        file_upload.mv(upload_path,(err)=>{
+            if(err) {
+                throw err;
+            }
+        });
+    }
+    let data = {name:req.body.name,email:req.body.email,mobile:req.body.mobile,image:image_name};
     let sql = "INSERT into admins SET ?";
     let query = connection.query(sql,data,(err,result)=>{
         if(err) {
@@ -76,8 +94,19 @@ app.get('/edit/:userid',(req,res)=>{
 });
 
 app.post('/update',(req,res)=>{
+    let image_name = '';
+    if(req.files !== undefined && Object.keys(req.files).length > 0) {
+        let file_upload = req.files.sampleFile;
+        image_name = req.files.sampleFile.name;
+        let upload_path = __dirname+'/public/file_upload/'+image_name;
+        file_upload.mv(upload_path,(err)=>{
+            if(err) {
+                throw err;
+            }
+        });
+    }
     let id = req.body.id;
-    let sql = "UPDATE admins SET name='"+req.body.name+"',email='"+req.body.email+"',mobile='"+req.body.mobile+"' where id="+id;
+    let sql = "UPDATE admins SET name='"+req.body.name+"',email='"+req.body.email+"',mobile='"+req.body.mobile+"',image='"+image_name+"' where id="+id;
     let query = connection.query(sql,(err,data)=>{
         if(err) {
             throw err;
