@@ -9,12 +9,12 @@ const { uploadImage, deleteImage } = require('./azure.js')
 
 require('dotenv').config();
 
-const APP_SERVER_PORT = process.env.port || 3000;
-const DATABASE_HOST = process.env.database_host
-const DATABASE_USER = process.env.database_user
-const DATABASE_PASSWORD = process.env.database_password
-const DATABASE = process.env.database
-const DATABASE_PORT = process.env.database_port || 3306
+const APP_SERVER_PORT = process.env.PORT || 3000;
+const DATABASE_HOST = process.env.DATABASE_HOST
+const DATABASE_USER = process.env.DATABASE_USER
+const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD
+const DATABASE = process.env.DATABASE
+const DATABASE_PORT = process.env.DATABASE_PORT || 3306
 
 const connection = mysql.createConnection({
     host: DATABASE_HOST,
