@@ -1,28 +1,37 @@
 const path = require("path");
 const express = require("express");
 const app = express();
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const fileupload = require('express-fileupload');
+const { uploadImage, deleteImage } = require('./azure.js')
 
-const PORT = process.env.port || 3000;
+require('dotenv').config();
+
+const APP_SERVER_PORT = process.env.port || 3000;
+const DATABASE_HOST = process.env.database_host
+const DATABASE_USER = process.env.database_user
+const DATABASE_PASSWORD = process.env.database_password
+const DATABASE = process.env.database
+const DATABASE_PORT = process.env.database_port || 3306
 
 const connection = mysql.createConnection({
-    host:'localhost',
-    user:'root',
-    password:'root',
-    database: 'test_db'
+    host: DATABASE_HOST,
+    user: DATABASE_USER,
+    password: DATABASE_PASSWORD,
+    database: DATABASE,
+    port: DATABASE_PORT,
+    ssl: { rejectUnauthorized: true }
 });
 
 connection.connect((error)=>{
     if(error) {
-        console.log("There is some problem to connect DB.");
+        console.log("There is some problem to connect DB: ", error);
     } else {
         console.log("Connected to DB");
     }
 });
-
 
 app.use('/uploadimg', express.static('./public/file_upload'));
 
@@ -37,9 +46,9 @@ app.use(fileupload());
 
 app.get('/',(req,res)=>{
     let sql = "select * from admins";
-    let query = connection.query(sql,(err,data)=>{
+    connection.query(sql,(err,data)=>{
         if(err) {
-            throw err;
+            console.log(err);
         } else {
             res.render('index',{
                 title:'CRUD operation using Node.js / ExpressJs / Mysql',
@@ -55,79 +64,73 @@ app.get('/add',(req,res)=>{
     });
 })
 
-app.post('/save',(req,res)=>{
-    let image_name = '';
+app.post('/save', async (req,res)=>{
+    let image_url = '';
     if(req.files !== undefined && Object.keys(req.files).length > 0) {
-        let file_upload = req.files.sampleFile;
-        image_name = req.files.sampleFile.name;
-        let upload_path = __dirname + '/public/file_upload/'+ image_name;
-        file_upload.mv(upload_path,(err)=>{
-            if(err) {
-                throw err;
-            }
-        });
+        image_url = await uploadImage(req.files.sampleFile) 
     }
-    let data = {name:req.body.name,email:req.body.email,mobile:req.body.mobile,image:image_name};
+    let data = {name:req.body.name,email:req.body.email,mobile:req.body.mobile,image:image_url};
     let sql = "INSERT into admins SET ?";
-    let query = connection.query(sql,data,(err,result)=>{
+    connection.query(sql,data,(err,result)=>{
         if(err) {
-            throw err;
+            console.log(err);
         } else {
             res.redirect('/');
         }
     })
 });
 
-app.get('/edit/:userid',(req,res)=>{
-    let id = req.params.userid;
-    let sql = `Select * from admins where id=${id}`;
-    let query = connection.query(sql,(err,data)=>{
-        if(err) {
-            throw err;
-        } else {
-            res.render('user_edit',{
-                'title':'Edit user',
-                user:data[0]
-            });
-        }
+const getAdminById = async (id) => {
+    const sql = `SELECT * FROM admins WHERE id=${id}`;
+    const data = await new Promise((resolve, reject) => {
+        connection.query(sql, (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+        });
     });
+    return data[0];
+};
+
+
+app.get('/edit/:userid',async (req,res)=>{
+    let id = req.params.userid;
+    user_data = await getAdminById(id)
+    res.render('user_edit',{
+                 'title':'Edit user',
+                 user:user_data
+             });
 });
 
-app.post('/update',(req,res)=>{
-    let image_name = '';
+app.post('/update',async (req,res)=>{
+    let image_url = '';
     if(req.files !== undefined && Object.keys(req.files).length > 0) {
-        let file_upload = req.files.sampleFile;
-        image_name = req.files.sampleFile.name;
-        let upload_path = __dirname+'/public/file_upload/'+image_name;
-        file_upload.mv(upload_path,(err)=>{
-            if(err) {
-                throw err;
-            }
-        });
+        image_url = await uploadImage(req.files.sampleFile) 
     }
     let id = req.body.id;
-    let sql = "UPDATE admins SET name='"+req.body.name+"',email='"+req.body.email+"',mobile='"+req.body.mobile+"',image='"+image_name+"' where id="+id;
-    let query = connection.query(sql,(err,data)=>{
+    let sql = "UPDATE admins SET name='"+req.body.name+"',email='"+req.body.email+"',mobile='"+req.body.mobile+"',image='"+image_url+"' where id="+id;
+    connection.query(sql,(err,_)=>{
         if(err) {
-            throw err;
+            console.log(err);
         } else {
             res.redirect("/");
         }
     });
 });
 
-app.get('/delete/:id',(req,res)=>{
+app.get('/delete/:id',async (req,res)=>{
     let id = req.params.id;
     if(id>0 && id != '') {
+        let imageUrl = (await getAdminById(id)).image
         let sql = "DELETE from admins where id="+id;
-        let query = connection.query(sql,(err,data)=>{
+        connection.query(sql,(err,data)=>{
             if(err){
-                throw err;
+                console.log(err);
             } else {
+                deleteImage(imageUrl.split('/').pop())
                 res.redirect("/");
             }
         })
     }
 })
 
-app.listen(PORT,()=>console.log(`Server is listing to port ${PORT}`));
+app.listen(APP_SERVER_PORT,()=>console.log(`Server is listing to port ${APP_SERVER_PORT}`));

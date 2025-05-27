@@ -29,9 +29,9 @@
     </div>
     <div class="form-group">
       <label for="phone">Image:</label>
-      <input type="file" class="form-control" id="file" placeholder="Enter Profile Image" name="sampleFile">
+      <input type="file" class="form-control" id="file" placeholder="Enter Profile Image(temporarily disabled)" name="sampleFile">
       <% if(user.image != '' && user.image != null) { %>
-        <img src="/uploadimg/<%= user.image %>" height="40" width="50" />
+        <img src="<%= user.image %>" height="40" width="50" />
       <% } %>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
